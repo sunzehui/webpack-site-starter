@@ -2,14 +2,23 @@
 webpack构建普通页面网站，附带tailwindcss
 
 ## Feature
-- ✨ 支持TypeScript
-- ✨ webpack-dev-server
-- ✨ 代码压缩、tree-shaking
-- ✨ 模块缓存
-- ✨ 编译进度条
-- ✨ 静态资源处理
-- ✨ tailwindcss
+✨ 支持TypeScript
 
+✨ webpack-dev-server
+
+✨ 代码压缩、tree-shaking
+
+✨ 模块缓存
+
+✨ 编译进度条
+
+✨ 静态资源处理
+
+✨ tailwindcss
+
+## Preview
+
+[codesandbox](https://codesandbox.io/s/black-resonance-qg8bwr)
 ## Usage
 推荐使用 `pnpm` !
 1. 将此项目克隆到本地
