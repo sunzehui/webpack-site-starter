@@ -2,13 +2,14 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const WebpapckBar = require("webpackbar");
-
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 // 代码压缩
 const TerserPlugin = require("terser-webpack-plugin");
 const CompressionWebpackPlugin = require("compression-webpack-plugin");
 
 const WindiCSSWebpackPlugin = require("windicss-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const config = {
   // 模式 ： production 生产模式；development：开发模式
   mode: process.env.mode || "development",
@@ -17,14 +18,18 @@ const config = {
   // 出口文件（生成目录）
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "js/bundle.js",
+    filename: "js/[name]-bundle.js",
   },
   // 插件
   plugins: [
     new HtmlWebpackPlugin({
       template: "./src/index.html",
+      title: "webpack site",
     }),
-    new MiniCssExtractPlugin(),
+    new MiniCssExtractPlugin({
+      filename: "styles/[name].[contenthash].css",
+      chunkFilename: "[name].css",
+    }),
     new CleanWebpackPlugin(),
     new WebpapckBar({
       showCursor: true,
@@ -34,6 +39,15 @@ const config = {
       algorithm: "gzip",
     }),
     new WindiCSSWebpackPlugin(),
+    // Copy static assets from `public` folder to `build` folder
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: "public",
+          to: "public",
+        },
+      ],
+    }),
   ],
   cache: {
     type: "filesystem",
@@ -43,11 +57,20 @@ const config = {
   },
   optimization: {
     minimize: true,
+    runtimeChunk: {
+      name: "runtime",
+    },
     minimizer: [
       new TerserPlugin({
         parallel: true, //开启并行压缩，可以加快构建速度
       }),
+      new CssMinimizerPlugin(),
     ],
+  },
+  performance: {
+    hints: false,
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000,
   },
   resolve: {
     extensions: [".ts", ".tsx", ".json", ".js"],
@@ -55,17 +78,21 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.css$/i,
-        // exclude: /node_modules/,
+        test: /\.(sass|scss|css)$/,
         use: [
           MiniCssExtractPlugin.loader,
-          //   "style-loader",
-          "css-loader",
-          //   { loader: "css-loader", options: { importLoaders: 1 } },
+          // "style-loader",
+          {
+            loader: "css-loader",
+            options: {
+              importLoaders: 2,
+              sourceMap: false,
+              modules: false,
+            },
+          },
           "postcss-loader",
         ],
       },
-
       {
         test: /\.(png|svg|jpg|gif)$/,
         loader: "url-loader",
@@ -74,7 +101,6 @@ const config = {
           limit: 8 * 1024,
           name: "[name]-[hash:3].[ext]",
           esModule: false,
-          outputPath: "imgs",
         },
       },
       {
@@ -85,12 +111,19 @@ const config = {
           outputPath: "font",
         },
       },
-      //   {
-      //     test: /\.(html)$/,
-      //     use: {
-      //       loader: "html-loader",
-      //     },
-      //   },
+      // 转换html标签引用静态文件
+      {
+        test: /\.(html)$/,
+        use: [
+          "extract-loader",
+          {
+            loader: "html-loader",
+            options: {
+              esModule: false,
+            },
+          },
+        ],
+      },
       {
         test: /\.tsx?$/,
         loader: "ts-loader",
